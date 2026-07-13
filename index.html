@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match the Pictures to the Months!</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, rgba(251, 194, 235, 0.8) 0%, rgba(166, 193, 238, 0.8) 100%), 
+                        url('https://i.ytimg.com/vi/z-sjnY8mqZw/maxresdefault.jpg') no-repeat center center;
+            background-size: cover;
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            text-align: center;
+            flex-shrink: 0;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 8px 15px;
+            border-radius: 30px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .instructions {
+            color: #2c3e50;
+            font-size: 1rem;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .flag-icon {
+            font-size: 1.2rem;
+        }
+
+        #main-layout {
+            display: flex;
+            flex-grow: 1;
+            width: 100%;
+            gap: 20px;
+            min-height: 0;
+        }
+
+        .scrollable-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+        .scrollable-panel::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+            border-radius: 10px;
+        }
+        .scrollable-panel::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+
+        #game-container {
+            width: 60%;
+            height: 100%;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            auto-rows: 150px;
+            gap: 12px;
+            padding-right: 5px;
+        }
+
+        .drop-zone {
+            background-color: rgba(255, 255, 255, 0.95);
+            border: 3px solid #fff;
+            border-radius: 12px;
+            padding: 8px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+        }
+
+        .drop-zone:nth-child(4n+1) { border-color: #ff7675; }
+        .drop-zone:nth-child(4n+2) { border-color: #74b9ff; }
+        .drop-zone:nth-child(4n+3) { border-color: #55efc4; }
+        .drop-zone:nth-child(4n+4) { border-color: #ffeaa7; }
+
+        .month-name {
+            font-size: 1.05rem;
+            font-weight: bold;
+            color: #2c3e50;
+            background-color: rgba(0,0,0,0.03);
+            padding: 3px 0;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            flex-shrink: 0;
+        }
+
+        .target-box {
+            border: 2px dashed #dfe6e9;
+            background-color: #f9f9f9;
+            flex-grow: 1;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #b2bec3;
+            font-size: 12px;
+            font-weight: bold;
+            overflow: hidden;
+        }
+
+        .target-box.occupied {
+            border-style: solid;
+            background-color: #fff;
+            border-color: #dfe6e9;
+        }
+
+        #right-sidebar {
+            display: flex;
+            flex-direction: column;
+            width: 40%;
+            height: 100%;
+            gap: 15px;
+        }
+
+        #action-bar {
+            text-align: center;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-check {
+            background-color: #6c5ce7;
+            color: white;
+            border: none;
+            padding: 12px 0;
+            width: 100%;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: not-allowed;
+            opacity: 0.5;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+
+        .btn-check.active {
+            cursor: pointer;
+            opacity: 1;
+            background-color: #e84393;
+        }
+
+        .btn-check.active:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        #feedback-box {
+            display: none;
+            padding: 10px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 1rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        #feedback-box.error {
+            display: block;
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        #pictures-container {
+            flex-grow: 1;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(5px);
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 16px;
+            padding: 15px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            auto-rows: 150px;
+            gap: 12px;
+            box-sizing: border-box;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+        }
+
+        .draggable-pic {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+            cursor: grab;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            background-color: #fff;
+            border: 2px solid #fff;
+        }
+
+        .target-box .draggable-pic {
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            border-radius: 6px;
+            box-shadow: none;
+            border: none;
+        }
+
+        .drop-zone.correct-flash {
+            animation: flash-green 0.6s ease-in-out forwards;
+        }
+
+        @keyframes flash-green {
+            0% { background-color: #fff; }
+            50% { background-color: #2ecc71; }
+            100% { background-color: #e8f8f5; border-color: #2ecc71; }
+        }
+
+        /* Full Screen Slideshow Mode Styles */
+        #slideshow-overlay {
+            display: flex;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #fff;
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        #slide-content {
+            display: flex;
+            width: 100%;
+            max-width: 1200px;
+            height: 75vh;
+            gap: 50px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #slide-img-container {
+            width: 50%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f9f9f9;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            padding: 25px;
+            border: 3px solid #ffb7c5; /* Pink floral tint border */
+        }
+
+        #slide-img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 12px;
+        }
+
+        #slide-text-container {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Enlarged Slide Typography */
+        #slide-month {
+            font-size: 3.8rem;
+            color: #2c3e50;
+            margin: 0 0 5px 0;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #slide-jp-name {
+            font-size: 2.4rem;
+            color: #e84393;
+            margin: 0 0 25px 0;
+            font-weight: bold;
+        }
+
+        #slide-desc {
+            font-size: 1.65rem;
+            color: #34495e;
+            line-height: 1.7;
+            margin: 0 0 35px 0;
+        }
+
+        /* Full-Screen Title Image Configuration */
+        #slideshow-overlay.intro-mode {
+            background: url('https://i.ytimg.com/vi/z-sjnY8mqZw/maxresdefault.jpg') no-repeat center center;
+            background-size: cover;
+        }
+
+        #slideshow-overlay.intro-mode #slide-content {
+            display: none; 
+        }
+
+        /* Position Start Button on the Lower Left */
+        #start-game-btn {
+            display: none;
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            background-color: #e84393;
+            color: white;
+            border: none;
+            padding: 18px 50px;
+            font-size: 1.6rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            transition: all 0.2s;
+            animation: pulse-attention 2s infinite;
+        }
+
+        #start-game-btn:hover {
+            background-color: #d63384;
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.45);
+            animation-play-state: paused;
+        }
+
+        #slideshow-overlay.intro-mode #start-game-btn {
+            display: block; 
+        }
+
+        @keyframes pulse-attention {
+            0% { transform: scale(1); box-shadow: 0 8px 25px rgba(232, 67, 147, 0.5); }
+            50% { transform: scale(1.03); box-shadow: 0 8px 35px rgba(232, 67, 147, 0.8); }
+            100% { transform: scale(1); box-shadow: 0 8px 25px rgba(232, 67, 147, 0.5); }
+        }
+
+        /* Presentation Formatting Options */
+        .congrats-title {
+            font-size: 4rem !important;
+            color: #2ecc71 !important;
+            margin-bottom: 20px !important;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .glowing-trophy {
+            display: inline-block;
+            animation: trophy-glow 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes trophy-glow {
+            from {
+                text-shadow: 0 0 10px #fff, 0 0 20px #fffa65, 0 0 30px #fff200;
+                transform: scale(1);
+            }
+            to {
+                text-shadow: 0 0 20px #fff, 0 0 30px #fffa65, 0 0 40px #fff200, 0 0 50px #fffa65;
+                transform: scale(1.1);
+            }
+        }
+
+        .congrats-text {
+            font-size: 2.2rem !important;
+            color: #2c3e50 !important;
+            font-weight: bold !important;
+            line-height: 1.6 !important;
+        }
+
+        #slide-controls {
+            display: flex;
+            gap: 20px;
+        }
+
+        .slide-btn {
+            background-color: #6c5ce7;
+            color: white;
+            border: none;
+            padding: 14px 40px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .slide-btn:hover {
+            background-color: #5b4cc4;
+        }
+
+        #restart-btn {
+            background-color: #2ecc71;
+        }
+        #restart-btn:hover {
+            background-color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <span class="flag-icon">🇯🇵</span>
+        <div class="instructions">Scroll both sides to see everything clearly. Drag pictures to their correct month boxes.</div>
+    </header>
+
+    <div id="main-layout">
+        <div id="game-container" class="scrollable-panel"></div>
+
+        <div id="right-sidebar">
+            <div id="action-bar">
+                <button id="check-btn" class="btn-check" disabled>Check Answers</button>
+                <div id="feedback-box"></div>
+            </div>
+            <div id="pictures-container" class="scrollable-panel"></div>
+        </div>
+    </div>
+
+    <!-- Presentation Mode Overlay -->
+    <div id="slideshow-overlay" class="intro-mode">
+        <button id="start-game-btn">🌸 Start Game 🌸</button>
+        <div id="slide-content">
+            <div id="slide-img-container">
+                <img id="slide-img" src="" alt="">
+            </div>
+            <div id="slide-text-container">
+                <div id="slide-month"></div>
+                <div id="slide-jp-name"></div>
+                <p id="slide-desc"></p>
+                <div id="slide-controls">
+                    <button id="prev-btn" class="slide-btn">👈 Back</button>
+                    <button id="next-btn" class="slide-btn">Next 👉</button>
+                    <button id="restart-btn" class="slide-btn" style="display: none;">🌸 Play Again 🌸</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Array matching monthly floral emoji symbols
+        const monthlyFlowers = ["🌸", "🌹", "🌱", "🌺", "🌼", "🌿", "🌻", "🍁", "🌾", "🎃", "🍂", "❄️"];
+
+        const monthData = [
+            { id: 1, name: 'January', file: '01.png', jp: '睦月 (Mutsuki)', desc: 'The month of harmony and affection. Families gather together to celebrate Shogatsu (New Year), eating traditional dishes and visiting shrines for good fortune.' },
+            { id: 2, name: 'February', file: '02.png', jp: '如月 (Kisaragi)', desc: 'The month of changing clothes as the cold winter lingers. It features Setsubun celebrations, where people throw beans to drive away evil spirits and welcome spring.' },
+            { id: 3, name: 'March', file: '03.png', jp: '弥生 (Yayoi)', desc: 'The month of spring growth. Life begins to bloom, celebrated through Hinamatsuri (Doll Festival) and the first glimpses of cherry blossom buds.' },
+            { id: 4, name: 'April', file: '04.png', jp: '卯月 (Uzuki)', desc: 'The month of the Deutzia flower. This marks the spectacular peak of Hanami (cherry blossom viewing) events and the start of the Japanese school and business year.' },
+            { id: 5, name: 'May', file: '05.png', jp: '皐月 (Satsuki)', desc: 'The month of planting rice fields. Families celebrate Children’s Day by flying colorful Koinobori (carp streamers) in the spring breeze.' },
+            { id: 6, name: 'June', file: '06.png', jp: '水無月 (Minazuki)', desc: 'The month of water. It marks Tsuyu, Japan’s rainy season, bringing vital water supplies to refresh agricultural fields and garden hydrangeas.' },
+            { id: 7, name: 'July', file: '07.png', jp: '文月 (Fumizuki)', desc: 'The month of literature and book-writing. This month brings the Tanabata Star Festival, where wishes are written down on colorful strips of paper hung on bamboo stalks.' },
+            { id: 8, name: 'August', file: '08.png', jp: '葉月 (Hazuki)', desc: 'The month of leaves turning crisp under the peak summer heat. Celebrated with major firework festivals (Hanabi Taikai) and the reflective Obon holidays.' },
+            { id: 9, name: 'September', file: '09.png', jp: '長月 (Nagatsuki)', desc: 'The month of long nights. Autumn begins to settle in, bringing cooler air and Tsukimi (Moon Viewing) gatherings to honor the harvest moon.' },
+            { id: 10, name: 'October', file: '10.png', jp: '神無月 (Kannazuki)', desc: 'The month of the spirits. According to folklore, all deities across Japan leave their regional shrines to gather for a grand assembly at the Izumo Taisha Grand Shrine.' },
+            { id: 11, name: 'November', file: '11.png', jp: '霜月 (Shimotsuki)', desc: 'The month of frost. Autumn foliage (Momiji) reaches its stunning peak color palette across forests, while families celebrate Shichi-Go-San growth milestones.' },
+            { id: 12, name: 'December', file: '12.png', jp: '師走 (Shiwasu)', desc: 'The busy winter month when even monks run around doing errands. Towns light up with winter illuminations as everyone prepares clean slates for the coming year.' },
+        ];
+
+        let placedCount = 0;
+        let currentSlideIndex = 0; 
+        let isGameFinished = false;
+
+        const gameContainer = document.getElementById('game-container');
+        const picturesContainer = document.getElementById('pictures-container');
+        const checkBtn = document.getElementById('check-btn');
+        const feedbackBox = document.getElementById('feedback-box');
+        const slideshowOverlay = document.getElementById('slideshow-overlay');
+        const startGameBtn = document.getElementById('start-game-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const prevBtn = document.getElementById('prev-btn');
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // 1. Build Month Targets Layout
+        monthData.forEach(month => {
+            const zone = document.createElement('div');
+            zone.className = 'drop-zone';
+            zone.dataset.monthId = month.id;
+
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'month-name';
+            nameDiv.textContent = month.name;
+            zone.appendChild(nameDiv);
+
+            const targetBox = document.createElement('div');
+            targetBox.className = 'target-box';
+            targetBox.textContent = 'Drop Pic Here';
+            zone.appendChild(targetBox);
+
+            gameContainer.appendChild(zone);
+
+            zone.addEventListener('dragover', e => e.preventDefault());
+            zone.addEventListener('dragenter', function(e) { e.preventDefault(); this.classList.add('drag-over'); });
+            zone.addEventListener('dragleave', function() { this.classList.remove('drag-over'); });
+            zone.addEventListener('drop', handleDrop);
+        });
+
+        // 2. Build Random Picture Tray
+        shuffle([...monthData]).forEach(month => {
+            createPictureItem(month.id, month.file, month.name);
+        });
+
+        function createPictureItem(id, filename, name) {
+            const img = document.createElement('img');
+            img.className = 'draggable-pic';
+            img.id = `pic-${id}`;
+            img.src = filename;
+            img.alt = `Scene ${name}`;
+            img.draggable = true;
+            img.dataset.monthId = id;
+
+            img.onerror = function() {
+                const brokenImgPlaceholder = document.createElement('div');
+                brokenImgPlaceholder.className = 'draggable-pic';
+                brokenImgPlaceholder.id = `pic-${id}`;
+                brokenImgPlaceholder.draggable = true;
+                brokenImgPlaceholder.dataset.monthId = id;
+                brokenImgPlaceholder.textContent = `#${id}`;
+                brokenImgPlaceholder.style.cssText = "display:flex; align-items:center; justify-content:center; background:#fff; font-weight:bold; color:#555; font-size:14px;";
+                
+                brokenImgPlaceholder.addEventListener('dragstart', function(e) {
+                    e.dataTransfer.setData('text/plain', this.id);
+                });
+                picturesContainer.appendChild(brokenImgPlaceholder);
+                this.remove();
+            };
+
+            img.addEventListener('dragstart', function(e) {
+                e.dataTransfer.setData('text/plain', this.id);
+            });
+
+            picturesContainer.appendChild(img);
+        }
+
+        // 3. Drag and Drop Actions
+        function handleDrop(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            const targetBox = this.querySelector('.target-box');
+            if (this.classList.contains('correct-flash')) return;
+
+            const picId = e.dataTransfer.getData('text/plain');
+            const pic = document.getElementById(picId);
+
+            if (!targetBox.classList.contains('occupied')) {
+                targetBox.textContent = '';
+                targetBox.appendChild(pic);
+                targetBox.classList.add('occupied');
+                placedCount++;
+            } else {
+                const oldPic = targetBox.querySelector('.draggable-pic, div.draggable-pic');
+                picturesContainer.appendChild(oldPic);
+                targetBox.appendChild(pic);
+            }
+            feedbackBox.style.display = 'none';
+            updateCheckButtonState();
+        }
+
+        picturesContainer.addEventListener('dragover', e => e.preventDefault());
+        picturesContainer.addEventListener('drop', function(e) {
+            e.preventDefault();
+            const picId = e.dataTransfer.getData('text/plain');
+            const pic = document.getElementById(picId);
+            
+            if (pic.parentElement.classList.contains('target-box')) {
+                const targetBox = pic.parentElement;
+                targetBox.classList.remove('occupied');
+                targetBox.textContent = 'Drop Pic Here';
+                picturesContainer.appendChild(pic);
+                placedCount--;
+                feedbackBox.style.display = 'none';
+                updateCheckButtonState();
+            }
+        });
+
+        function updateCheckButtonState() {
+            if (placedCount === 12) {
+                checkBtn.removeAttribute('disabled');
+                checkBtn.classList.add('active');
+            } else {
+                checkBtn.setAttribute('disabled', 'true');
+                checkBtn.classList.remove('active');
+            }
+        }
+
+        // 4. Verification and Slide Engine
+        checkBtn.addEventListener('click', function() {
+            if (placedCount < 12) return;
+
+            const zones = document.querySelectorAll('.drop-zone');
+            let allCorrect = true;
+
+            zones.forEach(zone => {
+                const targetBox = zone.querySelector('.target-box');
+                const pic = targetBox.querySelector('.draggable-pic, div.draggable-pic');
+                
+                if (pic) {
+                    if (zone.dataset.monthId === pic.dataset.monthId) {
+                        zone.classList.add('correct-flash');
+                        pic.draggable = false; 
+                    } else {
+                        allCorrect = false;
+                        targetBox.classList.remove('occupied');
+                        targetBox.textContent = 'Drop Pic Here';
+                        picturesContainer.appendChild(pic);
+                        placedCount--;
+                    }
+                }
+            });
+
+            updateCheckButtonState();
+
+            if (allCorrect) {
+                setTimeout(() => {
+                    isGameFinished = true;
+                    currentSlideIndex = 1; 
+                    showSlide(currentSlideIndex);
+                    slideshowOverlay.style.display = 'flex';
+                }, 800);
+            } else {
+                feedbackBox.className = 'error';
+                feedbackBox.innerHTML = '❌ Some matches were incorrect. They have been returned to the picture tray!';
+            }
+        });
+
+        function showSlide(index) {
+            slideshowOverlay.classList.remove('intro-mode');
+            
+            const slideContent = document.getElementById('slide-content');
+            slideContent.style.display = 'flex'; 
+            
+            document.getElementById('slide-month').classList.remove('congrats-title');
+            document.getElementById('slide-desc').classList.remove('congrats-text');
+            document.getElementById('slide-img-container').style.display = 'flex';
+            restartBtn.style.display = 'none';
+            nextBtn.style.display = 'inline-block';
+            prevBtn.style.visibility = 'visible';
+
+            if (index === 13) {
+                document.getElementById('slide-img-container').style.display = 'none';
+                document.getElementById('slide-month').innerHTML = '<span class="glowing-trophy">🏆</span> Challenge Completed! 🌸';
+                document.getElementById('slide-month').classList.add('congrats-title');
+                document.getElementById('slide-jp-name').textContent = 'おめでとうございます (Omedetou Gozaimasu)';
+                document.getElementById('slide-desc').textContent = 'Congratulations! You have successfully mastered all twelve months of the traditional calendar system.';
+                document.getElementById('slide-desc').classList.add('congrats-text');
+                
+                nextBtn.style.display = 'none';
+                restartBtn.style.display = 'inline-block';
+            } else {
+                const currentMonth = monthData[index - 1];
+                const flowerEmoji = monthlyFlowers[index - 1];
+                
+                document.getElementById('slide-img').src = currentMonth.file;
+                document.getElementById('slide-img').alt = currentMonth.name;
+                
+                // Embedded floral indicators linked with slide titles
+                document.getElementById('slide-month').innerHTML = `${flowerEmoji} ${currentMonth.name}`;
+                document.getElementById('slide-jp-name').textContent = currentMonth.jp;
+                document.getElementById('slide-desc').textContent = currentMonth.desc;
+
+                if (index === 1) prevBtn.style.visibility = 'hidden';
+                nextBtn.innerHTML = index === 12 ? 'Finish Challenge 🌸' : 'Next 👉';
+            }
+        }
+
+        // Start Game Button click logic
+        startGameBtn.addEventListener('click', function() {
+            slideshowOverlay.style.display = 'none';
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentSlideIndex > 1) {
+                currentSlideIndex--;
+                showSlide(currentSlideIndex);
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentSlideIndex < 13) {
+                currentSlideIndex++;
+                showSlide(currentSlideIndex);
+            }
+        });
+
+        restartBtn.addEventListener('click', () => {
+            window.location.reload();
+        });
+    </script>
+</body>
+</html>
